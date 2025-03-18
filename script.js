@@ -28,6 +28,9 @@ const selectOrigem = document.getElementById("origem");
 const selectDestino = document.getElementById("destino");
 const limparPontosBtn = document.getElementById("limparPontos");
 const distanciaInfo = document.getElementById("distancia-info");
+const iniciarVooBtn = document.getElementById("iniciarVoo");
+const pararVooBtn = document.getElementById("pararVoo");
+
 
 paises.forEach(pais => {
     let optionOrigem = document.createElement("option");
@@ -80,28 +83,116 @@ limparPontosBtn.addEventListener("click", () => {
     }
 });
 
+
+// Atualiza os instrumentos
+function atualizarInstrumentos() {
+    document.getElementById("velocidade").innerText = velocidade + " km/h";
+    document.getElementById("altitude").innerText = altitude + " m";
+    document.getElementById("flapStatus").innerText = flaps + "%";
+    document.getElementById("direcao").innerText = direcao;
+    document.getElementById("tremStatus").innerText = tremPouso;
+    document.getElementById("combustivel").innerText = combustivel.toFixed(2) + "%";
+}
+// Função para calcular a distância entre dois pontos
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Raio da Terra em km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+// Função para atualizar a linha entre origem e destino
+function atualizarRota() {
+    if (marcadorOrigem && marcadorDestino || selectOrigem && selectDestino) {
+        const latlngs = [marcadorOrigem.getLatLng(), marcadorDestino.getLatLng || selectOrigem.getLatLng(), selectDestino.getLatLng()];
+            if (linhaRota) mapa.removeLayer(linhaRota);
+            linhaRota = L.polyline(latlngs, {color: 'red'}).addTo(mapa);
+            if (marcadorOrigem == marcadorDestino) {
+            alert("O país de origem e destino não podem ser os mesmos.");
+            return;
+        }
+        
+        const distancia = calcularDistancia(latlngs[0].lat, latlngs[0].lng, latlngs[1].lat, latlngs[1].lng);
+        const tempoVoo = (distancia / (velocidade || 800)).toFixed(2);
+        distanciaInfo.innerHTML = `Distância: ${distancia.toFixed(2)} km | Tempo estimado: ${tempoVoo} h`;
+    }
+}
+
+// Função para definir um marcador ao clicar no mapa
+function definirMarcador(e) {
+    if (!marcadorOrigem) {
+        marcadorOrigem = L.marker(e.latlng).addTo(mapa).bindPopup("Origem").openPopup();
+    } else if (!marcadorDestino) {
+        marcadorDestino = L.marker(e.latlng).addTo(mapa).bindPopup("Destino").openPopup();
+        atualizarRota();
+    }
+}
+mapa.on('click', definirMarcador);
+
+// Evento para limpar pontos
+limparPontosBtn.addEventListener("click", () => {
+    if (marcadorOrigem) mapa.removeLayer(marcadorOrigem);
+    if (marcadorDestino) mapa.removeLayer(marcadorDestino);
+    if (linhaRota) mapa.removeLayer(linhaRota);
+    linhaRota = null;
+    distanciaInfo.innerHTML = "";
+});
+
+tempoVoo = 0;
+iniciarVooBtn.addEventListener("click", () => {
+    if (marcadorOrigem == null && marcadorDestino == null || selectOrigem == null && selectDestino == null) {
+        alert("Você precisa selecionar um país de origem e um de destino antes de voar!");
+        if (marcadorOrigem == marcadorDestino || selectOrigem == selectDestino) {
+            alert("O país de origem e destino não podem ser os mesmos.");
+        }
+        return;
+    }
+    if(velocidade > 0){
+        setInterval(consumirCombustivel, 4000);
+    } else {
+        clearInterval(consumirCombustivelInterval);
+    }
+    atualizarInstrumentos();
+});
+
+
 // Controle de Velocidade
 document.getElementById("aumentarVel").addEventListener("click", function() {
-    velocidade += 50;
+    if(marcadorOrigem == null && marcadorDestino == null || selectOrigem == null && selectDestino == null){
+        alert("Escolha um país para viajar primeiro")
+    } else {
+        velocidade += 50;
+    }
     atualizarInstrumentos();
 });
 
 document.getElementById("diminuirVel").addEventListener("click", function() {
-    if (velocidade > 0) velocidade -= 50;
+    if (velocidade > 0) 
+        velocidade -= 50;
     atualizarInstrumentos();
 });
 
 // Controle de Altitude
 document.getElementById("subir").addEventListener("click", function() {
-    if (velocidade >= 200) {
-        altitude += 500;
+    if (velocidade >= 600) {
+        altitude += 100;
+        if (altitude == 200){
+            alert("Recolha o trem de pouso")
+        }
         atualizarInstrumentos();
     }
 });
 
 document.getElementById("descer").addEventListener("click", function() {
     if (altitude > 0) {
-        altitude -= 500;
+        altitude -= 100;
+        if (altitude == 100){
+            alert("Baixe o trem de pouso")
+        }
         atualizarInstrumentos();
     }
 });
@@ -127,77 +218,23 @@ document.getElementById("direcaoDir").addEventListener("click", function() {
 // Controle do Trem de Pouso
 document.getElementById("tremPouso").addEventListener("click", function() {
     tremPouso = tremPouso === "Baixado" ? "Recolhido" : "Baixado";
-    atualizarInstrumentos();
-});
-
-// Atualiza os instrumentos
-function atualizarInstrumentos() {
-    document.getElementById("velocidade").innerText = velocidade + " km/h";
-    document.getElementById("altitude").innerText = altitude + " m";
-    document.getElementById("flapStatus").innerText = flaps + "%";
-    document.getElementById("direcao").innerText = direcao;
-    document.getElementById("tremStatus").innerText = tremPouso;
-    document.getElementById("combustivel").innerText = combustivel.toFixed(2) + "%";
-}
-// Função para calcular a distância entre dois pontos
-function calcularDistancia(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Raio da Terra em km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
-
-// Função para atualizar a linha entre origem e destino
-function atualizarRota() {
-    if (marcadorOrigem && marcadorDestino) {
-        const latlngs = [marcadorOrigem.getLatLng(), marcadorDestino.getLatLng()];
-        if (linhaRota) mapa.removeLayer(linhaRota);
-        linhaRota = L.polyline(latlngs, {color: 'red'}).addTo(mapa);
-        
-        const distancia = calcularDistancia(latlngs[0].lat, latlngs[0].lng, latlngs[1].lat, latlngs[1].lng);
-        const tempoVoo = (distancia / (velocidade || 800)).toFixed(2);
-        distanciaInfo.innerHTML = `Distância: ${distancia.toFixed(2)} km | Tempo estimado: ${tempoVoo} h`;
+    if(altitude == 0){
+        alert("O trem de pouso não pode ser recolhido em solo.");
     }
-}
-
-// Função para definir um marcador ao clicar no mapa
-function definirMarcador(e) {
-    if (!marcadorOrigem) {
-        marcadorOrigem = L.marker(e.latlng).addTo(mapa).bindPopup("Origem").openPopup();
-    } else if (!marcadorDestino) {
-        marcadorDestino = L.marker(e.latlng).addTo(mapa).bindPopup("Destino").openPopup();
-        atualizarRota();
+    
+    atualizarInstrumentos();
+});
+function consumirCombustivel() {
+    if (combustivel > 0) {
+        combustivel -= 0.5;
+        if (combustivel <= 0) {
+            combustivel = 0;
+            alert("Combustível esgotado! O avião não pode continuar o voo.");
+        }
     }
+    atualizarInstrumentos();
 }
-mapa.on('click', definirMarcador);
 
-// Evento para limpar pontos
-limparPontosBtn.addEventListener("click", () => {
-    if (marcadorOrigem) mapa.removeLayer(marcadorOrigem);
-    if (marcadorDestino) mapa.removeLayer(marcadorDestino);
-    if (linhaRota) mapa.removeLayer(linhaRota);
-    marcadorOrigem = null;
-    marcadorDestino = null;
-    linhaRota = null;
-    distanciaInfo.innerHTML = "";
-});
-
-// Controle de velocidade
-document.getElementById("aumentarVel").addEventListener("click", function() {
-    velocidade += 50;
-    atualizarInstrumentos();
-    atualizarRota();
-});
-
-document.getElementById("diminuirVel").addEventListener("click", function() {
-    if (velocidade > 0) velocidade -= 50;
-    atualizarInstrumentos();
-    atualizarRota();
-});
 
 // Atualiza os instrumentos
 function atualizarInstrumentos() {
@@ -209,5 +246,9 @@ function atualizarInstrumentos() {
     document.getElementById("combustivel").innerText = combustivel.toFixed(2) + "%";
 } 
 
-// Mantém todas as funcionalidades como altitude, flaps, direção, trem de pouso e combustível funcionando corretamente.
+
+
+
+
+
 

@@ -12,13 +12,13 @@
         <h1>Painel de Controle do Avião</h1>
 
         <label for="origem">Origem:</label>
-        <select id="origem">
+        <select id="origem" required="required">
             <option value="">Escolha um país</option>
         </select>
 
         <label for="destino">Destino:</label>
-        <select id="destino">
-            <option value="">Escolha um país</option>
+        <select id="destino" required="required">
+            <option value="" aria-placeholder="Escolha um país">Escolha um país</option>
         </select>
 
         <button id="limparPontos">Remover Pontos</button>
@@ -52,6 +52,7 @@
                 <div class="relogio" id="tremStatus">Baixado</div>
                 <button id="tremPouso">Alternar</button>
             </div>
+            <button id="iniciarVoo">Iniciar Voo</button>
             <div class="instrumento">
                 <h3>Combustível</h3>
                 <div class="relogio" id="combustivel">100%</div>
