@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle do Avião</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <div class="painel">
+        <h1>Painel de Controle do Avião</h1>
+
+        <label for="origem">Origem:</label>
+        <select id="origem">
+            <option value="">Escolha um país</option>
+        </select>
+
+        <label for="destino">Destino:</label>
+        <select id="destino">
+            <option value="">Escolha um país</option>
+        </select>
+
+        <button id="limparPontos">Remover Pontos</button>
+
+        <div class="instrumentos">
+            <div class="instrumento">
+                <h3>Velocidade</h3>
+                <div class="relogio" id="velocidade">0 km/h</div>
+                <button id="aumentarVel">+</button>
+                <button id="diminuirVel">-</button>
+            </div>
+            <div class="instrumento">
+                <h3>Altitude</h3>
+                <div class="relogio" id="altitude">0 m</div>
+                <button id="subir">Subir</button>
+                <button id="descer">Descer</button>
+            </div>
+            <div class="instrumento">
+                <h3>Flaps</h3>
+                <div class="relogio" id="flapStatus">0%</div>
+                <button id="flaps">Alternar</button>
+            </div>
+            <div class="instrumento">
+                <h3>Direção</h3>
+                <div class="relogio" id="direcao">Norte</div>
+                <button id="direcaoEsq">←</button>
+                <button id="direcaoDir">→</button>
+            </div>
+            <div class="instrumento">
+                <h3>Trem de Pouso</h3>
+                <div class="relogio" id="tremStatus">Baixado</div>
+                <button id="tremPouso">Alternar</button>
+            </div>
+            <div class="instrumento">
+                <h3>Combustível</h3>
+                <div class="relogio" id="combustivel">100%</div>
+            </div>
+        </div>
+
+        <div class="distancia-info">
+            <p>Distância: <span id="distancia">0</span> km</p>
+            <p>Tempo de Voo: <span id="tempo">0</span> horas</p>
+        </div>
+    </div>
+
+    <div id="mapa"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
